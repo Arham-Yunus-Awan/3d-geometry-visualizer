@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Geometry Visualizer</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-mode">
+    <div id="container"></div>
+    
+    <!-- Right Side Controls -->
+    <div id="view-controls">
+        <button class="view-control-btn" onclick="toggleDarkMode()" id="theme-btn" title="Toggle Dark/Light Mode">
+            🌙
+        </button>
+        <button class="view-control-btn" onclick="resetCamera()" title="Reset Camera">
+            📷
+        </button>
+    </div>
+    
+    <div id="controls">
+        <h2>🎯 3D Geometry Visualizer</h2>
+        
+        <div class="axis-legend">
+            <div class="axis-item">
+                <div class="axis-color" style="background: #ff6b6b;"></div>
+                <strong>X</strong> (horizontal)
+            </div>
+            <div class="axis-item">
+                <div class="axis-color" style="background: #4ecdc4;"></div>
+                <strong>Y</strong> (depth)
+            </div>
+            <div class="axis-item">
+                <div class="axis-color" style="background: #ffe66d;"></div>
+                <strong>Z</strong> (vertical)
+            </div>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+            <button class="tab-button active" onclick="switchMode('basic')">Basic Mode</button>
+            <button class="tab-button" onclick="switchMode('equation')">Equation Mode</button>
+        </div>
+
+        <!-- Basic Mode Content -->
+        <div id="basic-mode" class="mode-content active">
+            <div class="input-group">
+                <label>X-axis condition:</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="x-slab" onchange="toggleSlab('x')">
+                    <label style="margin: 0; font-weight: normal;">Use slab (range between two values)</label>
+                </div>
+                <div id="x-single" class="single-container">
+                    <div class="inline-inputs">
+                        <select id="x-operator">
+                            <option value="none">none</option>
+                            <option value="=">=</option>
+                            <option value="<=">≤</option>
+                            <option value=">=">≥</option>
+                        </select>
+                        <input type="number" id="x-value" placeholder="e.g., -3" step="0.5">
+                    </div>
+                </div>
+                <div id="x-slab-container" class="slab-container">
+                    <div class="slab-label">Enter range: min ≤ x ≤ max</div>
+                    <div class="slab-inputs">
+                        <input type="number" id="x-min" placeholder="min" step="0.5">
+                        <span>≤ x ≤</span>
+                        <input type="number" id="x-max" placeholder="max" step="0.5">
+                    </div>
+                </div>
+                <div class="info-text">e.g., "= -3" for plane, or slab for -1 ≤ x ≤ 1</div>
+            </div>
+
+            <div class="input-group">
+                <label>Y-axis condition:</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="y-slab" onchange="toggleSlab('y')">
+                    <label style="margin: 0; font-weight: normal;">Use slab (range between two values)</label>
+                </div>
+                <div id="y-single" class="single-container">
+                    <div class="inline-inputs">
+                        <select id="y-operator">
+                            <option value="none">none</option>
+                            <option value="=">=</option>
+                            <option value="<=">≤</option>
+                            <option value=">=">≥</option>
+                        </select>
+                        <input type="number" id="y-value" placeholder="e.g., 2" step="0.5">
+                    </div>
+                </div>
+                <div id="y-slab-container" class="slab-container">
+                    <div class="slab-label">Enter range: min ≤ y ≤ max</div>
+                    <div class="slab-inputs">
+                        <input type="number" id="y-min" placeholder="min" step="0.5">
+                        <span>≤ y ≤</span>
+                        <input type="number" id="y-max" placeholder="max" step="0.5">
+                    </div>
+                </div>
+                <div class="info-text">e.g., ">= 0" for positive y</div>
+            </div>
+
+            <div class="input-group">
+                <label>Z-axis condition:</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="z-slab" onchange="toggleSlab('z')">
+                    <label style="margin: 0; font-weight: normal;">Use slab (range between two values)</label>
+                </div>
+                <div id="z-single" class="single-container">
+                    <div class="inline-inputs">
+                        <select id="z-operator">
+                            <option value="none">none</option>
+                            <option value="=">=</option>
+                            <option value="<=">≤</option>
+                            <option value=">=">≥</option>
+                        </select>
+                        <input type="number" id="z-value" placeholder="e.g., 5" step="0.5">
+                    </div>
+                </div>
+                <div id="z-slab-container" class="slab-container">
+                    <div class="slab-label">Enter range: min ≤ z ≤ max</div>
+                    <div class="slab-inputs">
+                        <input type="number" id="z-min" placeholder="min" step="0.5">
+                        <span>≤ z ≤</span>
+                        <input type="number" id="z-max" placeholder="max" step="0.5">
+                    </div>
+                </div>
+                <div class="info-text">e.g., ">= 5" for z above 5</div>
+            </div>
+
+            <button onclick="visualizeRegion()">🔍 Visualize Region</button>
+            <button class="clear-btn" onclick="clearAll()">🗑️ Clear</button>
+
+            <div class="example">
+                <strong>💡 Examples:</strong><br>
+                • Second quadrant: x ≤ 0, y ≥ 0, z = 0<br>
+                • Plane with conditions: x = -3, y ≥ 0, z = none<br>
+                • Slab: Check "slab" for y, enter -1 and 1<br>
+                • First octant: x ≥ 0, y ≥ 0, z ≥ 0
+            </div>
+        </div>
+
+        <!-- Equation Mode Content -->
+        <div id="equation-mode" class="mode-content">
+            <div class="equation-help">
+                <strong>📐 Equation Help:</strong><br>
+                • Use x, y, z as variables<br>
+                • Powers: x^2, y^3, z^(1/2)<br>
+                • Operations: +, -, *, /, ^<br>
+                • Functions: sqrt(), sin(), cos(), abs()<br>
+                • Example: x^2 + y^2 + z^2 = 25
+            </div>
+
+            <div id="equations-container">
+                <!-- Equations will be added here dynamically -->
+            </div>
+
+            <button class="add-equation-btn" onclick="addEquation()" id="add-eq-btn">
+                ➕ Add Equation
+            </button>
+
+            <div class="equation-buttons">
+                <button onclick="visualizeEquations()">🔍 Visualize All</button>
+                <button class="intersection-btn" onclick="visualizeIntersection()" id="intersection-btn" style="display: none;">
+                    🎯 Show Intersection
+                </button>
+                <button class="clear-btn" onclick="clearAll()">🗑️ Clear All</button>
+            </div>
+
+            <div class="example">
+                <strong>💡 Examples:</strong><br>
+                • Sphere: x^2 + y^2 + z^2 = 9<br>
+                • Paraboloid: z = x^2 + y^2<br>
+                • Plane: 2*x + 3*y + z = 6<br>
+                • Cylinder: x^2 + y^2 = 4
+            </div>
+        </div>
+
+        <div class="mouse-controls">
+            🖱️ <strong>Controls:</strong><br>
+            Drag to rotate • Scroll to zoom
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer">
+        Created by <strong>Arham Yunus Awan</strong>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
